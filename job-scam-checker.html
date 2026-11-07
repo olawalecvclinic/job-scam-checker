@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Job Scam Checker: is this job offer real?</title>
+<meta name="description" content="Paste a job ad, recruiter message or offer letter and see the red flags in seconds. Free. Nothing is uploaded.">
+<style>
+:root{--bg:#eef2f5;--card:#fff;--ink:#14213d;--muted:#5b6678;--line:#d5dce4;--low:#1b7f5c;--mid:#c77700;--high:#c0392b;--accent:#14213d}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:720px;margin:0 auto;padding:28px 18px 60px}
+h1{font:700 clamp(28px,6vw,42px)/1.12 Georgia,"Times New Roman",serif;margin:0 0 10px;letter-spacing:-.01em}
+.lead{color:var(--muted);margin:0 0 22px;max-width:56ch}
+textarea{width:100%;min-height:210px;padding:14px;border:1.5px solid var(--line);border-radius:10px;font:inherit;background:var(--card);color:var(--ink);resize:vertical}
+textarea:focus,button:focus-visible,a:focus-visible{outline:3px solid #7aa7ff;outline-offset:2px}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+button{font:inherit;font-weight:600;padding:12px 20px;border-radius:10px;border:1.5px solid var(--accent);cursor:pointer}
+.primary{background:var(--accent);color:#fff}
+.ghost{background:transparent;color:var(--accent)}
+.privacy{font-size:14px;color:var(--muted);margin-top:12px}
+#result{display:none;margin-top:30px}
+.verdict{background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:22px}
+.verdict h2{font:700 clamp(26px,5vw,36px)/1.1 Georgia,serif;margin:0 0 6px}
+.meter{display:flex;gap:4px;margin:16px 0 6px;position:relative}
+.meter span{flex:1;height:12px;border-radius:3px;background:var(--line)}
+.meter span.on.l{background:var(--low)}.meter span.on.m{background:var(--mid)}.meter span.on.h{background:var(--high)}
+.score{font-size:14px;color:var(--muted)}
+.flags{list-style:none;padding:0;margin:20px 0 0;display:grid;gap:12px}
+.flag{background:var(--card);border:1.5px solid var(--line);border-left-width:6px;border-radius:10px;padding:14px 16px}
+.flag.critical{border-left-color:var(--high)}.flag.warn{border-left-color:var(--mid)}
+.flag b{display:block;margin-bottom:2px}
+.flag q{display:block;margin:6px 0;padding:6px 10px;background:#f3f5f8;border-radius:6px;font-size:14px;color:#33415c;quotes:"“" "”"}
+.flag p{margin:4px 0 0;color:var(--muted);font-size:15px}
+h3{font:700 20px Georgia,serif;margin:28px 0 8px}
+.next{background:var(--card);border:1.5px solid var(--line);border-radius:12px;padding:6px 20px 14px}
+.next li{margin:8px 0}
+.note{font-size:14px;color:var(--muted);margin-top:22px}
+.promo{margin-top:26px;border:1.5px dashed var(--line);border-radius:12px;padding:16px;font-size:15px}
+footer{margin-top:40px;font-size:14px;color:var(--muted);border-top:1px solid var(--line);padding-top:16px}
+@media (prefers-reduced-motion:no-preference){.meter span{transition:background .4s}}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <h1>Is this job offer real?</h1>
+  <p class="lead">Paste the job ad, the recruiter’s WhatsApp or email message, or the offer letter. You get the warning signs in seconds, with the exact words that triggered them.</p>
+
+  <label for="txt" style="font-weight:600">Paste the message or job ad here</label>
+  <textarea id="txt" placeholder="Example: Congratulations, you have been selected. Pay a registration fee of 15,000 to confirm your slot and send your passport copy on Telegram…"></textarea>
+  <div class="row">
+    <button class="primary" id="check">Check for red flags</button>
+    <button class="ghost" id="sample">Try an example</button>
+    <button class="ghost" id="clear">Clear</button>
+  </div>
+  <p class="privacy">Everything is checked inside your browser. Your text is never sent anywhere.</p>
+
+  <section id="result" aria-live="polite">
+    <div class="verdict">
+      <h2 id="vTitle"></h2>
+      <div id="vText"></div>
+      <div class="meter" id="meter"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+      <div class="score" id="vScore"></div>
+    </div>
+    <ul class="flags" id="flags"></ul>
+
+    <h3>What to do next</h3>
+    <ul class="next" id="next"></ul>
+
+    <div class="row"><button class="ghost" id="share">Share this tool with a friend</button></div>
+
+    <!-- MONEY SPOT 1: paste your affiliate link or service offer below, then remove the "display:none" -->
+    <div class="promo" style="display:none">
+      Want a recruiter-ready CV? <a href="https://tinyurl.com/bdh7msd8">Check your CV free</a>
+    </div>
+
+    <p class="note">This checker spots common warning signs. It cannot prove a job is real or fake. A clean result does not mean it is safe, so always verify the company yourself.</p>
+  </section>
+
+  <footer>
+    Never pay to get a job. Real employers do not charge for interviews, training, visas, uniforms or “processing”.
+    <!-- MONEY SPOT 2: paste your AdSense code here after approval -->
+  </footer>
+</main>
+
+<script>
+// Each rule: id, title, severity (critical | warn), weight, regex, why
+const RULES = [
+ {t:"Asks you to pay a fee", s:"critical", w:40,
+  r:/\b(registration|processing|application|training|medical|visa|uniform|equipment|admin(istration)?|interview|document|clearance|courier|insurance|slot|onboarding|flight|ticket|security)\s+(fee|fees|payment|charge|charges|deposit)\b|\bpay\s+(a|the|your)?\s*(small\s+)?(fee|deposit)\b|\b(send|transfer|deposit)\s+(me\s+|us\s+)?(the\s+)?(money|funds|payment)\b|\bpay\s+(first|before)\b/i,
+  why:"Genuine employers pay you. They do not charge you to get hired. This is the most common job scam in the world."},
+ {t:"Payment by gift card, crypto or money transfer", s:"critical", w:35,
+  r:/\b(gift\s?cards?|itunes|google\s?play\s?card|steam\s?card|bitcoin|crypto(currency)?|usdt|western\s?union|moneygram|cash\s?app|zelle)\b/i,
+  why:"Scammers ask for these because the money is almost impossible to get back."},
+ {t:"Cheque or “buy equipment and we reimburse you”", s:"critical", w:35,
+  r:/\b(send|mail|issue)\s+(you\s+)?(a\s+)?(cheque|check)\b|\bpurchase\s+(your\s+)?(equipment|software|laptop|supplies)\b|\bwe\s+will\s+reimburse\b|\bkeep\s+the\s+(rest|balance|difference)\b/i,
+  why:"A fake cheque looks real for days, then the bank takes the money back from you."},
+ {t:"Asks for sensitive documents or bank details early", s:"critical", w:28,
+  r:/\b(passport|bank\s+(account|details|statement)|account\s+number|\bBVN\b|\bNIN\b|social\s+security|\bSSN\b|card\s+number|\bCVV\b|\bPIN\b|ATM\s+card|national\s+id|driver'?s\s+licen[cs]e)\b/i,
+  why:"Real employers ask for ID and bank details only after a signed offer, and through official HR systems."},
+ {t:"Package reshipping or payment handling job", s:"critical", w:30,
+  r:/\b(reship(ping)?|re-ship|receive\s+(and\s+)?(forward\s+)?packages?|payment\s+(processing\s+)?agent|mystery\s+shopper|forward\s+(the\s+)?funds?|process\s+payments?\s+(for|from))\b/i,
+  why:"These roles are often used to move stolen goods or launder money, and you can be held responsible."},
+ {t:"Guaranteed job or visa", s:"warn", w:22,
+  r:/\b(100%\s+)?guarantee[d]?\s+(job|visa|placement|employment|approval|work)\b|\bno\s+interview\b|\bhired\s+(immediately|instantly|today)\b|\bno\s+experience\s+(needed|required|necessary)\b|\binstant\s+(job|offer|hire)\b/i,
+  why:"Nobody can guarantee a job or visa. Real hiring involves an application and a selection process."},
+ {t:"Pay that sounds too good to be true", s:"warn", w:20,
+  r:/\$\s?\d{3,}\s*(\/|per|a|each)\s*(day|hour|week)\b|\bearn\s+(up\s+to\s+)?[$€£₦]?\s?\d[\d,]*\s*(daily|per\s+day|a\s+day|weekly|per\s+week)\b|\beasy\s+money\b|\bwork\s+(only\s+)?\d\s*hours?\s+(a|per)\s+day\b|\bmake\s+money\s+(fast|online|from\s+home)\b/i,
+  why:"High pay for little work, no skills and no experience is a classic lure."},
+ {t:"Interview or job done only through chat", s:"warn", w:20,
+  r:/\b(interview\s+(will\s+be|is)\s+(conducted|held|done)\s+(on|via|through|over)\s+(telegram|whatsapp|chat|text|signal|skype\s+chat)|text[- ]based\s+interview|chat\s+interview|online\s+chat\s+interview)\b/i,
+  why:"Real companies interview by video, phone or in person, not only through a messaging app."},
+ {t:"Moves you to Telegram or WhatsApp", s:"warn", w:12,
+  r:/\b(contact|message|text|chat|reach|add)\s+(us|me|him|her|our\s+\w+)?\s*(on|via|through|at)\s+(telegram|whatsapp|signal)\b|\bt\.me\/|\bwa\.me\/|\btelegram\s+(id|handle|username)\b/i,
+  why:"Scammers move conversations to private apps where there is no company record and no one is accountable."},
+ {t:"“You have been selected” though you never applied", s:"warn", w:14,
+  r:/\byou\s+(have\s+been|were|are)\s+(selected|shortlisted|chosen|picked|approved)\b|\bwe\s+(found|saw|came\s+across)\s+your\s+(cv|resume|profile)\b|\bwithout\s+(applying|an\s+application)\b|\bcongratulations\b/i,
+  why:"Be careful with “congratulations” messages for jobs you do not remember applying for."},
+ {t:"Pressure to act fast", s:"warn", w:12,
+  r:/\b(urgent(ly)?|immediately|within\s+(24|48)\s+hours|act\s+now|hurry|last\s+chance|limited\s+(slots?|spots?|vacanc(y|ies))|slots?\s+(are\s+)?(filling|almost\s+full)|today\s+only|reply\s+(now|asap))\b/i,
+  why:"Pressure stops you from thinking and checking. Real employers give you time."},
+ {t:"Shortened or messaging links", s:"warn", w:8,
+  r:/\b(bit\.ly|tinyurl\.com|goo\.gl|cutt\.ly|rb\.gy|shorturl\.at|is\.gd|ow\.ly)\/\S+/i,
+  why:"Shortened links hide where you are really going. Do not enter personal details through them."},
+ {t:"Generic greeting", s:"warn", w:6,
+  r:/\bdear\s+(applicant|candidate|sir\/?madam|job\s*seeker|beloved|friend)\b|\bhello\s+dear\b/i,
+  why:"A mass message to “dear applicant” suggests it was sent to many people at once."}
+];
+
+const FREE_MAIL = /\b[\w.+-]+@(gmail|yahoo|ymail|outlook|hotmail|live|aol|proton(mail)?|icloud|mail|gmx|zoho)\.(com|me|net|org)\b/i;
+
+const $ = id => document.getElementById(id);
+
+function analyse(text){
+  const found = [];
+  for (const rule of RULES){
+    const m = text.match(rule.r);
+    if (m) found.push({title:rule.t, sev:rule.s, w:rule.w, why:rule.why, hit:snippet(text, m)});
+  }
+  const mail = text.match(FREE_MAIL);
+  if (mail && /\b(hr|recruit|career|jobs?|hiring|talent|human\s+resources|company|limited|ltd|inc|corp|group|plc)\b/i.test(text)){
+    found.push({title:"Company message from a free email address", sev:"warn", w:16, why:"A real company recruiter normally writes from the company’s own domain, not Gmail, Yahoo or Outlook.", hit:mail[0]});
+  }
+  let score = Math.min(100, found.reduce((a,f)=>a+f.w,0));
+  const critical = found.some(f=>f.sev==="critical");
+  if (critical) score = Math.max(score, 70);
+  return {found, score, critical};
+}
+
+function snippet(text, m){
+  const i = m.index, s = Math.max(0, i-30), e = Math.min(text.length, i+m[0].length+30);
+  return (s>0?"…":"") + text.slice(s,e).replace(/\s+/g," ").trim() + (e<text.length?"…":"");
+}
+
+function verdictFor(score, n){
+  if (n===0) return {cls:"l", title:"No common red flags found", text:"That does not mean it is safe. Verify the company before sharing personal details."};
+  if (score>=60) return {cls:"h", title:"High risk. Likely a scam.", text:"Do not pay anything and do not send documents or bank details."};
+  if (score>=30) return {cls:"m", title:"Medium risk. Be careful.", text:"Several warning signs showed up. Verify everything independently before you reply."};
+  return {cls:"l", title:"Low risk, but check first", text:"A few small warning signs showed up. Verify the company before you go further."};
+}
+
+function render(res){
+  const v = verdictFor(res.score, res.found.length);
+  $("vTitle").textContent = v.title;
+  $("vTitle").style.color = v.cls==="h" ? "var(--high)" : v.cls==="m" ? "var(--mid)" : "var(--low)";
+  $("vText").textContent = v.text;
+  const bars = $("meter").children, on = Math.round(res.score/10);
+  for (let i=0;i<bars.length;i++){
+    bars[i].className = i<on ? "on " + (i>=6?"h":i>=3?"m":"l") : "";
+  }
+  $("vScore").textContent = "Risk score: " + res.score + " out of 100 · " + res.found.length + " warning sign" + (res.found.length===1?"":"s") + " found";
+
+  const ul = $("flags"); ul.innerHTML = "";
+  res.found.sort((a,b)=>b.w-a.w).forEach(f=>{
+    const li = document.createElement("li"); li.className = "flag " + f.sev;
+    const b = document.createElement("b"); b.textContent = f.title;
+    const q = document.createElement("q"); q.textContent = f.hit;
+    const p = document.createElement("p"); p.textContent = f.why;
+    li.append(b,q,p); ul.appendChild(li);
+  });
+
+  const steps = [
+    "Search the company name plus the word “scam” and read what comes up.",
+    "Find the company’s official website yourself (do not use links in the message) and look for the same job on its careers page.",
+    "Check that the recruiter’s email ends with the company’s real domain, and call the company’s official number to confirm.",
+    "Never pay for a job, interview, visa, training or uniform. Never send passport, bank or card details before a signed offer.",
+    "If you already paid or shared documents, tell your bank immediately and report it to your local cybercrime or consumer authority."
+  ];
+  const nx = $("next"); nx.innerHTML = "";
+  nx.style.paddingLeft = "38px";
+  steps.forEach(s=>{const li=document.createElement("li"); li.textContent=s; nx.appendChild(li);});
+
+  $("result").style.display = "block";
+  $("result").scrollIntoView({behavior:"smooth", block:"start"});
+}
+
+$("check").onclick = ()=>{
+  const t = $("txt").value.trim();
+  if (t.length < 20){ alert("Paste the full message or job ad first (at least a couple of sentences)."); return; }
+  render(analyse(t));
+};
+$("clear").onclick = ()=>{ $("txt").value=""; $("result").style.display="none"; $("txt").focus(); };
+$("sample").onclick = ()=>{
+  $("txt").value = "Dear applicant, congratulations! You have been selected for our Customer Support role with ABC Global Limited. Earn $300 per day working only 2 hours daily. No experience needed. To secure your slot, pay a registration fee of 15,000 today, within 24 hours. Send a copy of your passport and bank account details, then contact our HR on Telegram. Email: abcglobal.hr@gmail.com";
+};
+$("share").onclick = async ()=>{
+  const msg = "Got a job offer that feels off? Paste it into this free Job Scam Checker to see the red flags: " + location.href;
+  try{
+    if (navigator.share){ await navigator.share({title:"Job Scam Checker", text:msg}); }
+    else { await navigator.clipboard.writeText(msg); alert("Link copied. Paste it to a friend."); }
+  }catch(e){}
+};
+</script>
+</body>
+</html>
